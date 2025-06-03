@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        #user-form {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        #user-form input {
+            padding: 10px;
+            font-size: 16px;
+        }
+        #user-form button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        #user-form button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        button {
+            cursor: pointer;
+        }
+        button.delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        button.edit {
+            background-color: #ffc107;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>User Management</h1>
+    <div id="user-form">
+        <input type="text" id="name" placeholder="Name" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <button id="add-user">Add User</button>
+    </div>
+    <div id="user-list">
+        <h2>All Users</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="users"></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    const API_URL = '/api/users';
+
+    async function fetchUsers() {
+        const response = await fetch(API_URL);
+        const users = await response.json();
+        const usersTable = document.getElementById('users');
+        usersTable.innerHTML = '';
+
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.id}</td>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td>
+                    <button class="edit" onclick="editUser(${user.id})">Edit</button>
+                    <button class="delete" onclick="deleteUser(${user.id})">Delete</button>
+                </td>
+            `;
+            usersTable.appendChild(row);
+        });
+    }
+
+    async function addUser() {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+
+        if (!name || !email) {
+            alert('Name and email are required!');
+            return;
+        }
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email }),
+        });
+
+        if (response.ok) {
+            fetchUsers();
+            document.getElementById('name').value = '';
+            document.getElementById('email').value = '';
+        }
+    }
+
+    async function editUser(id) {
+        const name = prompt("Enter the new name:");
+        const email = prompt("Enter the new email:");
+
+        if (!name || !email) {
+            alert("Name and email are required!");
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email }),
+        });
+
+        if (response.ok) {
+            alert("User updated successfully.");
+            fetchUsers();
+        } else {
+            alert("Failed to update user.");
+        }
+    }
+
+    async function deleteUser(id) {
+        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            fetchUsers();
+        }
+    }
+
+    document.getElementById('add-user').addEventListener('click', addUser);
+    fetchUsers();
+</script>
+</body>
+</html>
